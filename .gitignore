@@ -1,0 +1,15 @@
+# Byte-compiled / optimized / DLL files
+**/__pycache__
+**/*.py[cod]
+*$py.class
+
+.venv
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Lock files (keep uv.lock as it's used for reproducibility)
+!uv.lock

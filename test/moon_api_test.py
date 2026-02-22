@@ -58,3 +58,12 @@ def test_moon_loading_full_moon_2026_03_03():
         # Should be at full moon (100% loaded)
         assert "Moon is loaded" in data["message"]
         assert "100%" in data["message"]
+
+def test_moon_loading_full_moon_3000():
+    """Test moon loading at 3000-03-03 - should be no longer work"""
+    with time_machine.travel("3000-03-03 11:39:12", tick=False):
+        response = client.get("/moon/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert "message" in data
+        assert "Date not supported" in data["message"]

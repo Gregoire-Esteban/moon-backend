@@ -3,6 +3,7 @@ import time
 from datetime import date
 
 app = FastAPI()
+max_time_stamp = 32508218892 # year 3000
 
 
 def create_progress_bar(prefix: str, percentage: int, progress_length: int = 20,  suffix: str = "") -> str:
@@ -16,9 +17,12 @@ def determine_cycle_status_message() -> str:
     """Determine the status message for the moon cycle.
     Timestamp are epoch unix timestamp expressed in seconds.
     Other durations are also expressed in seconds."""
+
+    current_date_timestamp = time.time()
+    if current_date_timestamp >= max_time_stamp:
+        return "Date not supported (are you from the future ?)"
     initial_previous_full_moon = float(1767434655) # Sat Jan 03 2026 10:04:15 GMT+0000
     lunar_cycle_duration = float(2573516)
-    current_date_timestamp = time.time()
     next_full_moon = initial_previous_full_moon
     while next_full_moon < current_date_timestamp:
         next_full_moon += lunar_cycle_duration

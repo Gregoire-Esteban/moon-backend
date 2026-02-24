@@ -14,7 +14,9 @@ permissions:
 
 jobs:
   unit-tests:
-    runs-on: ubuntu-lates
+    runs-on: ubuntu-22.04
+    outputs:
+      app_version: ${{ steps.versionning.outputs.app_version }}
     steps:
     - uses: actions/checkout@v6
 
@@ -34,4 +36,19 @@ jobs:
     - name: "Run unit tests"
       run: uv run pytest test
     
+    # TODO : maybe extract the two following steps in a dedicated job ? (and move them to release-docker.yml)
+    - id: versionning
+      run: |
+        version=$(uv version | cut -d' ' -f2)
+        echo "APP_VERSION=${version}" >> $GITHUB_OUTPUT
+      
+    - name: Verify
+      run : |
+        echo APP_VERSION: ${{ steps.versionning.outputs.app_version }}
     
+    
+  build-image:
+    needs: unit-tests
+    uses: ./.github/workflows/release-docker.yml
+    with:
+      app_version: ${{ needs.unit-tests.outputs.app_version }}

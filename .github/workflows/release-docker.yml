@@ -17,8 +17,8 @@ on:
         type: string
 
 permissions:
+      contents: read
       id-token: write # Necessary in the process of OCID connection to aws
-      
 env:
   AWS_REGION: eu-north-1
   ECR_REPOSITORY: wazapps/moon-backend

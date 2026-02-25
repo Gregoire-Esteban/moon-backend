@@ -35,7 +35,8 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v5.1.1
       with:
-        role-to-assume: MoonBackendGithubRole
+        role-to-assume: arn:aws:iam::293415643635:role/MoonBackendGithubRole
+        role-session-name: ${{ github.run_id }} # useful for audit logs
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Login to Amazon ECR

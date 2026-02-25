@@ -48,6 +48,8 @@ jobs:
     
     
   build-image:
+    permissions:
+      id-token: write # Necessary in the process of OCID connection to aws
     needs: unit-tests
     uses: ./.github/workflows/release-docker.yml
     with:

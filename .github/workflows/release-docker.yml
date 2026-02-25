@@ -16,6 +16,9 @@ on:
         required: true
         type: string
 
+permissions:
+      id-token: write # Necessary in the process of OCID connection to aws
+      
 env:
   AWS_REGION: eu-north-1
   ECR_REPOSITORY: wazapps/moon-backend
@@ -23,8 +26,6 @@ env:
 jobs:
   release-docker:
     name: Release Docker
-    permissions:
-      id-token: write # Necessary in the process of OCID connection to aws 
     runs-on: ubuntu-22.04
 
     steps:

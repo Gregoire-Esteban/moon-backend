@@ -37,6 +37,7 @@ jobs:
       with:
         role-to-assume: arn:aws:iam::293415643635:role/MoonBackendGithubRole
         role-session-name: ${{ github.run_id }} # useful for audit logs
+        role-duration-seconds: 1500
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Login to Amazon ECR
@@ -51,7 +52,7 @@ jobs:
         IMAGE_TAG: ${{ format('{0}-{1}', (github.event.inputs.app_version || inputs.app_version), github.sha) }}
       run: |
         # Build a docker container image and push it to ECR
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f standalone.Dockerfile
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
     

@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: moon-backend
+  labels:
+    app: moon-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: moon-backend
+  template:
+    metadata:
+      labels:
+        app: moon-backend
+    spec:
+      containers:
+      - name: moon-backend
+        image: 293415643635.dkr.ecr.eu-north-1.amazonaws.com/wazapps/moon-backend:0.1.0-589e1c169d6a1cd0dd414931f16a03766fa51708
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5

@@ -62,7 +62,14 @@ def determine_cycle_status_message() -> str:
         else:
             return create_progress_bar("Unloading (<-) :", unloading_percentage)
 
+# TODO : eventually version the api (/api/v1/moon/status ? /api/moon/status ?)
 @app.get("/moon/status")
 def get_moon_status():
     """Endpoint to get the moon status message."""
     return {"message": determine_cycle_status_message()}
+
+
+@app.get("/ready")
+def get_ready():
+    """Endpoint to check if the service is ready."""
+    return {"status": "ok"}

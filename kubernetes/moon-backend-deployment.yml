@@ -5,7 +5,7 @@ metadata:
   labels:
     app: moon-backend
 spec:
-  replicas: 3
+  replicas: 5
   selector:
     matchLabels:
       app: moon-backend
@@ -14,9 +14,14 @@ spec:
       labels:
         app: moon-backend
     spec:
+      nodeSelector:
+        eks.amazonaws.com/compute-type: auto
+      securityContext:
+        runAsUser: 999
+        runAsGroup: 999
       containers:
       - name: moon-backend
-        image: 293415643635.dkr.ecr.eu-north-1.amazonaws.com/wazapps/moon-backend:0.1.0-589e1c169d6a1cd0dd414931f16a03766fa51708
+        image: 293415643635.dkr.ecr.eu-north-1.amazonaws.com/wazapps/moon-backend:0.1.0-67c27f2358bd2549e082c85bdba6d4054871fda0
         ports:
         - containerPort: 8000
         resources:
@@ -38,3 +43,5 @@ spec:
             port: 8000
           initialDelaySeconds: 5
           periodSeconds: 5
+        securityContext:
+            allowPrivilegeEscalation: false

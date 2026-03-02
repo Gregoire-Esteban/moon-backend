@@ -22,7 +22,7 @@ def determine_cycle_status_message() -> str:
     if current_date_timestamp >= max_time_stamp:
         return "Date not supported (are you from the future ?)"
     initial_previous_full_moon = float(1767434655) # Sat Jan 03 2026 10:04:15 GMT+0000
-    lunar_cycle_duration = float(2573516)
+    lunar_cycle_duration = float(2557209)
     next_full_moon = initial_previous_full_moon
     while next_full_moon < current_date_timestamp:
         next_full_moon += lunar_cycle_duration

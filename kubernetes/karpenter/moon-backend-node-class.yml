@@ -3,6 +3,8 @@ kind: EC2NodeClass
 metadata:
   name: moon-backend-node-class
 spec:
+
+  role: "KarpenterNodeRole-full-moon-cluster"
   # Required, discovers subnets to attach to instances
   # Each term in the array of securityGroupSelectorTerms is ORed together
   # Within a single term, all conditions are ANDed

@@ -5,7 +5,7 @@ metadata:
   labels:
     app: moon-backend
 spec:
-  replicas: 5
+  replicas: 3
   selector:
     matchLabels:
       app: moon-backend
@@ -22,6 +22,7 @@ spec:
       containers:
       - name: moon-backend
         image: 293415643635.dkr.ecr.eu-north-1.amazonaws.com/wazapps/moon-backend:0.1.0-67c27f2358bd2549e082c85bdba6d4054871fda0
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
         resources:

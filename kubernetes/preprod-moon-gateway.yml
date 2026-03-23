@@ -5,6 +5,11 @@ metadata:
   namespace: preprod-moon
 spec:
   gatewayClassName: agentgateway
+  infrastructure:
+    parametersRef:
+      name: agentgateway-config
+      group: agentgateway.dev
+      kind: AgentgatewayParameters
   listeners:
   - protocol: HTTP
     port: 80

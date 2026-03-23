@@ -5,14 +5,11 @@ metadata:
   namespace: preprod-moon
 spec:
   parentRefs:
-  - name: preprod-moon-gateway
+    - name: preprod-moon-gateway
+      namespace: preprod-moon
   hostnames:
-  - "preprod.moon.wazapps.dev"
+    - "preprod.moon.wazapps.dev"
   rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: "/"
-    backendRefs:
-    - name: backend-service
-      port: 80
+    - backendRefs:
+      - name: backend-service
+        port: 80

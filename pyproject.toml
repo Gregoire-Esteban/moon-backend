@@ -5,7 +5,7 @@ description = "Wanna know more about the moon ?"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi[standard]>=0.129.0",
+    "fastapi[standard]>=0.143.0",
 ]
 
 [build-system]
@@ -22,12 +22,12 @@ dev = [
   {include-group = "tests"},
 ]
 lint = [
-  "ruff>=0.15.0",
+  "ruff>=0.16.10",
 ]
 launcher = [
-  "fastapi-cli>=0.0.21",
+  "fastapi-cli>=0.0.32",
 ]
 tests = [
-  "pytest>=9.0.2",
-  "time-machine>=3.2.0",
+  "pytest>=9.1.1",
+  "time-machine>=3.5.1",
 ]

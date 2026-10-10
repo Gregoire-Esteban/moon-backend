@@ -1,0 +1,8 @@
+[bootstrap.mise_shell_activate]
+bash = true
+
+[env]
+LOCATION = "europe-west1"
+
+[tasks.bootstrap]
+run = "gcloud config set run/region $LOCATION"

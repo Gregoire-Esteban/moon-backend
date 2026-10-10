@@ -1,0 +1,5 @@
+[tools]
+opentofu = "latest"
+
+[settings]
+minimum_release_age = "5d"

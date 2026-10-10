@@ -36,14 +36,19 @@ charge up to the max (full moon), then discharge to zero (just before a new moon
 - Docker (for containerized deployment)
 - Python 3.12+ (for local development)
 - UV package manager (for dependency management)
+- Check the various prerequisits in the subfolders of the **deployment** directory
+- optional : install [mise](https://mise.jdx.dev/) for an easier set up
 
 ### Installation
 
-#### Using Docker (Recommended)
+#### Using Docker
 
 ```bash
-# Build and run the container
-docker-compose up --build
+# Build the Docker image
+docker build -t moon-backend -f Dockerfile .
+
+# Run the container
+docker run -p 8000:8000 moon-backend
 ```
 
 #### Local Development
@@ -60,7 +65,7 @@ uv run fastapi dev src/moon_api.py
 
 ```bash
 # Run tests
-pytest test/
+uv run pytest test/
 ```
 
 ## API Documentation
@@ -91,25 +96,6 @@ moon_backend/
 - Expand with astronomical data
 - Add caching for better performance
 - Add requests rate limitation for security
-
-## Development
-
-### Running Locally
-
-```bash
-# Start the development server
-fastapi dev src/moon_api.py
-```
-
-### Building with Docker
-
-```bash
-# Build the Docker image
-docker build -t moon-backend -f Dockerfile .
-
-# Run the container
-docker run -p 8000:8000 moon-backend
-```
 
 ## Contact
 

@@ -2,7 +2,8 @@
 bash = true
 
 [env]
-LOCATION = "europe-west1"
+REGION = "europe-west1" # For the CLI only, see the environment folder for provisionning location
+BUCKET_LOCATION = "UE" # For the state backup
 
 [tasks.bootstrap]
-run = "gcloud config set run/region $LOCATION"
+run = "gcloud config set run/region $REGION"

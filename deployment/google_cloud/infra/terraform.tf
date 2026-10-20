@@ -10,7 +10,7 @@ variable "project_id" {
   type        = string
 }
 
-variable "defaut_region" {
+variable "default_region" {
   description = "Default region"
   type        = string
 }
@@ -18,11 +18,11 @@ variable "defaut_region" {
 terraform {
   required_providers {
     google = {
-        source = "hashicorp/google"
-        version = "8.6.0"
+      source  = "hashicorp/google"
+      version = "8.6.0"
     }
     time = {
-      source = "hashicorp/time"
+      source  = "hashicorp/time"
       version = "0.14.2"
     }
   }
@@ -30,5 +30,5 @@ terraform {
 
 provider "google" {
   project = var.project_id
-  region = var.defaut_region
+  region  = var.default_region
 }

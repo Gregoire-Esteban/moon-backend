@@ -78,6 +78,7 @@ Once the API is running locally, you can access the interactive API documentatio
 
 ```
 moon_backend/
+├── deployment/...           # Possible deployment options, check their READMEs
 ├── src/
 │   └── moon_api.py          # Main API implementation
 ├── test/

@@ -2,6 +2,8 @@
 
 Rely on Google Cloud resources to deploy the moon app.
 
+*STATUS*: ⚠️ STILL IN DEVELOPMENT
+
 ### Prerequisites
 
 1. Setup The [Google Cloud CLI](https://docs.cloud.google.com/sdk/gcloud) (don't forget to run `gcloud init` & `gcloud auth application-default login` for the authentication steps)

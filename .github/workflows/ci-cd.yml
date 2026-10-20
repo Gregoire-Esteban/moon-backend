@@ -16,28 +16,25 @@ permissions:
 
 jobs:
   unit-tests:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       app_version: ${{ steps.versionning.outputs.app_version }}
     steps:
-    - uses: actions/checkout@v6
-
-    - name: "Set up Python"
-      uses: actions/setup-python@v6
-      with:
-        python-version-file: "pyproject.toml"
+    - uses: actions/checkout@v7
     
-    # TODO : check latest version of this action + remove aws-related steps
     - name: Install uv
-      uses: astral-sh/setup-uv@v7
+      uses: astral-sh/setup-uv@v10.3.0
       with:
         enable-cache: true
+
+    - name: Install Python 3.14
+      run: uv python install 3.14 
 
     - name: "Set up the project"
       run: uv sync --locked --all-extras --dev
 
     - name: "Run unit tests"
-      run: uv run pytest test
+      run: uv run --frozen pytest test
     
     # TODO : maybe extract the two following steps in a dedicated job ? (and move them to release-docker.yml)
     - id: versionning

@@ -18,7 +18,7 @@ echo "Hello there !"
 
 echo "Let me check if the image is in good shape to be launched"
 cd ../../
-cat standalone.Dockerfile | docker build --network=host -t moon-backend .
+cat standalone.Dockerfile | docker build --network=host -t moon-backend -f- .
 grype moon-backend --from docker --fail-on critical
 echo "Image check passed"
 cd deployment/google_cloud
@@ -57,18 +57,21 @@ gcloud billing projects link $prod_project_id --billing-account="$selected_billi
 if [[ $(echo $REGION) = "" ]]; then read -rp "The default region is not defined, please enter it here : " REGION; fi
 
 echo "Generating the environment variable files..."
+current_gcloud_account=$(gcloud config get account)
 mkdir environments || true # tolerate an existing folder (generated files inside will be overwritten)
 
 cat > environments/dev.tfvars << EOF
 environment = "dev"
 project_id = "$dev_project_id"
 default_region = "$REGION"
+moon_service_members = ["user:$current_gcloud_account"]
 EOF
 
 cat > environments/prod.tfvars << EOF
 environment = "prod"
 project_id = "$prod_project_id"
 default_region = "$REGION"
+moon_service_members = ["allUsers"]
 EOF
 
 # ========== # 3. Create the registry in the dev project ==========
@@ -77,7 +80,8 @@ echo "Creating the registry..."
 cd registry
 tofu init -var-file ../environments/dev.tfvars
 tofu apply -var-file ../environments/dev.tfvars
-images_repository=$(tofu output -raw registry_uri)
+images_repository_uri=$(tofu output -raw registry_uri)
+images_repository_id=$(tofu output -raw repository_id)
 
 # ========== # 4. Build and push a first image to it ==========
 
@@ -85,12 +89,16 @@ echo "Build and push a first image to the repository..."
 gcloud auth configure-docker $REGION-docker.pkg.dev
 moon_backend_version=$(uv version --short)
 last_commit_sha=$(git rev-parse --short HEAD)
-docker tag "moon-backend" "$images_repository/moon-backend:$moon_backend_version"
-docker tag "moon-backend" "$images_repository/moon-backend:$last_commit_sha"
-docker push "$images_repository/moon-backend" --all-tags
+docker tag "moon-backend" "$images_repository_uri/moon-backend:$moon_backend_version"
+docker tag "moon-backend" "$images_repository_uri/moon-backend:$last_commit_sha"
+docker push "$images_repository_uri/moon-backend" --all-tags
 
 # ========== 5. Initiate the developement environment & provision it ==========
 
+cd ../infra
+tofu init -var-file ../environments/dev.tfvars -var="image_to_deploy=$images_repository_uri/moon-backend:$last_commit_sha" -var="repository_id=$images_repository_id"
+tofu apply -var-file ../environments/dev.tfvars -var="image_to_deploy=$images_repository_uri/moon-backend:$last_commit_sha" -var="repository_id=$images_repository_id"
+echo "You can now test the service at $(tofu output -raw service_url) (the google cloud run proxy is recommended)"
 
 
-#prompt user : do you want to opt-in for the backup process ? (triggers backup/backup_script every day using cron)
+# prompt user : do you want to opt-in for the backup process ? (triggers backup/backup_script every day using cron)

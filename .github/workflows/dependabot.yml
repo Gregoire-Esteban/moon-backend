@@ -1,0 +1,25 @@
+version: 2
+updates:
+- package-ecosystem: "uv"
+  directory: "/"
+  schedule:
+    interval: "cron"
+    cronjob: "0 20 * * 0" # Every sunday at 8 p.m.
+  exclude-paths:
+    - "src/*.py"
+    - "test/**"
+    - "deployment/**"
+    - "**/*.md"
+    - ".*"
+
+- package-ecosystem: "github-actions"
+  directory: "/"
+  schedule:
+    interval: "cron"
+    cronjob: "0 10 9 * *" # Every 9th day of the month at 10 a.m.
+  exclude-paths:
+    - "src/*.py"
+    - "test/**"
+    - "deployment/**"
+    - "**/*.md"
+    - ".*"

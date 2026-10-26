@@ -13,6 +13,8 @@ variable "moon_service_members" {
   description = "Principals able to invoke the service"
 }
 
+data "google_project" "current_project" {}
+
 resource "google_project_service" "cloud_run_api" {
   project            = var.project_id
   service            = "run.googleapis.com"
@@ -23,7 +25,6 @@ resource "time_sleep" "wait_42_seconds" {
   depends_on      = [google_project_service.cloud_run_api]
   create_duration = "42s"
 }
-
 
 module "service_account" {
   description = "Service account related to the current Cloud Run service revision"
@@ -38,9 +39,7 @@ resource "google_artifact_registry_repository_iam_binding" "moon_repo_iam_bindin
   depends_on = [module.service_account]
   repository = var.repository_id
   role       = "roles/artifactregistry.reader"
-  members = [
-    "serviceAccount:${module.service_account.email}",
-  ]
+  members = var.environment == "dev" ? ["serviceAccount:${module.service_account.email}"] : ["serviceAccount:service-${data.google_project.current_project.number}@serverless-robot-prod.iam.gserviceaccount.com", "serviceAccount:${module.service_account.email}"]
 }
 
 resource "google_cloud_run_service" "moon_backend" {

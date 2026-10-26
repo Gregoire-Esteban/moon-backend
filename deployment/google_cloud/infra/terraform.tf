@@ -16,6 +16,9 @@ variable "default_region" {
 }
 
 terraform {
+  backend "local" {
+    path = "states/${var.environment}.tfstate"
+  }
   required_providers {
     google = {
       source  = "hashicorp/google"

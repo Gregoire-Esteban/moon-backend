@@ -96,9 +96,16 @@ docker push "$images_repository_uri/moon-backend" --all-tags
 # ========== 5. Initiate the developement environment & provision it ==========
 
 cd ../infra
+echo "Preparing the development environment..."
 tofu init -var-file ../environments/dev.tfvars -var="image_to_deploy=$images_repository_uri/moon-backend:$last_commit_sha" -var="repository_id=$images_repository_id"
 tofu apply -var-file ../environments/dev.tfvars -var="image_to_deploy=$images_repository_uri/moon-backend:$last_commit_sha" -var="repository_id=$images_repository_id"
 echo "You can now test the service at $(tofu output -raw service_url) (the google cloud run proxy is recommended)"
 
+# ========== 6. Initiate the production environment & provision it ==========
+
+echo "Preparing the production environment..."
+tofu init -reconfigure -var-file ../environments/prod.tfvars -var="image_to_deploy=$images_repository_uri/moon-backend:$last_commit_sha" -var="repository_id=$images_repository_id"
+tofu apply -var-file ../environments/prod.tfvars -var="image_to_deploy=$images_repository_uri/moon-backend:$last_commit_sha" -var="repository_id=$images_repository_id"
+echo "The service is now publicly available at $(tofu output -raw service_url)"
 
 # prompt user : do you want to opt-in for the backup process ? (triggers backup/backup_script every day using cron)

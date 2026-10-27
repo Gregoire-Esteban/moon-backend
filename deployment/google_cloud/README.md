@@ -12,3 +12,7 @@ Rely on Google Cloud resources to deploy the moon app.
 
 
 > ***NOTE***: You can also update the environment variable set in this folder's *mise.toml* file or provide and configure the CLI as you see fit.
+
+### Cleanup ( ⚠️ Destroys everything related to the deployment ! )
+
+Simply execute the *annihilate.sh* script

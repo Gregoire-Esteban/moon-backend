@@ -6,13 +6,16 @@ Rely on Google Cloud resources to deploy the moon app.
 
 ### Prerequisites
 
+#### Main deployments
 1. Setup The [Google Cloud CLI](https://docs.cloud.google.com/sdk/gcloud) (don't forget to run `gcloud init` & `gcloud auth application-default login` for the authentication steps)
 2. Execute the *startup.sh* script
-3. (optional) Create a bucket to hold the state backups : `gcloud storage buckets create gs://unique-named-bucket --location="EU" --project="targeted-project-id"`
-
 
 > ***NOTE***: You can also update the environment variable set in this folder's *mise.toml* file or provide and configure the CLI as you see fit.
 
+#### Backups (optional)
+Execute *backup/prepare_backups.sh* script. It will help you create a **bucket** and schedule recurring backups using **cron**.
+
+
 ### Cleanup ( ⚠️ Destroys everything related to the deployment ! )
 
-Simply execute the *annihilate.sh* script
+Simply execute the *annihilate.sh* script.

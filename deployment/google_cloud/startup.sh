@@ -8,9 +8,10 @@
 # 4. Build and push a first image to it
 # 5. Initiate the developement environment & provision it
 # 6. Initiate the production environment & provision it
-# 7. (optional) Set up periodic state backups 
 
 set -euo pipefail
+
+cd "$(dirname "$0")"
 
 echo "Hello there !"
 
@@ -107,5 +108,3 @@ echo "Preparing the production environment..."
 tofu init -reconfigure -var-file ../environments/prod.tfvars -var="image_to_deploy=$images_repository_uri/moon-backend:$last_commit_sha" -var="repository_id=$images_repository_id"
 tofu apply -var-file ../environments/prod.tfvars -var="image_to_deploy=$images_repository_uri/moon-backend:$last_commit_sha" -var="repository_id=$images_repository_id"
 echo "The service is now publicly available at $(tofu output -raw service_url)"
-
-# prompt user : do you want to opt-in for the backup process ? (triggers backup/backup_script every day using cron)

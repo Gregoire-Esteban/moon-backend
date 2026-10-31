@@ -4,6 +4,31 @@ set -euo pipefail
 cd "$(dirname "$0")"
 source .env
 
+restore_infra() {
+    local env_name="$1"
+    local tfvars="../environments/${env_name}.tfvars"
+    local backup_file="${env_name}_state_backup.json"
+
+    echo "Restoring ${env_name} environment state..."
+    gcloud storage cp "gs://${BACKUP_BUCKET_NAME}/${env_name}_state_backup.json" "$backup_file"
+    read -rp "Enter the commit short SHA used to tag the image deployed : " tag_short_sha
+    images_repository_uri=$(tofu -chdir="../registry" output -raw registry_uri)
+    images_repository_id=$(tofu -chdir="../registry" output -raw repository_id)
+    tofu -chdir="../infra" init -reconfigure -var-file "$tfvars" -var="image_to_deploy=$images_repository_uri/moon-backend:$tag_short_sha" -var="repository_id=$images_repository_id"
+    # Check downloaded backup file to be able to target the infra terraform project
+    if [[ $(tofu -chdir="../infra" state pull -var-file "$tfvars" | jq -r .lineage) != $(jq -r .lineage "$backup_file") ]]
+    then
+        echo "Lineage of backup and current state do not match, aborting."
+        exit 1
+    fi
+    # Apply state restoration
+    tofu -chdir="../infra" state push -force -var-file="$tfvars" -var="image_to_deploy=$images_repository_uri/moon-backend:$tag_short_sha" -var="repository_id=$images_repository_id" "../backup/$backup_file"
+    # Ensure state has converged
+    tofu -chdir="../infra" plan -detailed-exitcode -var-file="$tfvars" -var="image_to_deploy=$images_repository_uri/moon-backend:$tag_short_sha" -var="repository_id=$images_repository_id"
+    rm -f "$backup_file"
+    echo "${env_name^} environment state restored."
+}
+
 echo "=========================================="
 echo "  STATE RESTORATION"
 echo "=========================================="
@@ -21,7 +46,7 @@ case "$choice" in
         gcloud storage cp "gs://${BACKUP_BUCKET_NAME}/registry_state_backup.json" ./registry_state_backup.json
         tofu -chdir="../registry" init -var-file ../environments/dev.tfvars
         # Check downloaded backup file to be able to target the registry terraform project
-        if [[ $(tofu -chdir="../registry" state pull -var-file ../environments/dev.tfvars | jq -r .lineage) != $(jq -r .lineage ../backup/dev_state_backup.json) ]]
+        if [[ $(tofu -chdir="../registry" state pull -var-file ../environments/dev.tfvars | jq -r .lineage) != $(jq -r .lineage ./registry_state_backup.json) ]]
         then
             echo "Lineage of backup and current state do not match, aborting."
             exit 1
@@ -34,44 +59,10 @@ case "$choice" in
         echo "Registry state restored."
         ;;
     2)
-        echo "Restoring dev environment state..."
-        gcloud storage cp "gs://${BACKUP_BUCKET_NAME}/dev_state_backup.json" ./dev_state_backup.json 
-        read -rp "Enter the commit short SHA used to tag the image deployed : " tag_short_sha
-        images_repository_uri=$(tofu -chdir="../registry" output -raw registry_uri)
-        images_repository_id=$(tofu -chdir="../registry" output -raw repository_id)
-        tofu -chdir="../infra" init -reconfigure -var-file ../environments/dev.tfvars -var="image_to_deploy=$images_repository_uri/moon-backend:$tag_short_sha" -var="repository_id=$images_repository_id"
-        # Check downloaded backup file to be able to target the registry terraform project
-        if [[ $(tofu -chdir="../infra" state pull -var-file ../environments/dev.tfvars | jq -r .lineage) != $(jq -r .lineage ./dev_state_backup.json) ]]
-        then
-            echo "Lineage of backup and current state do not match, aborting."
-            exit 1
-        fi
-        # Apply dev env state restoration
-        tofu -chdir="../infra" state push -force -var-file="../environments/dev.tfvars" -var="image_to_deploy=$images_repository_uri/moon-backend:$tag_short_sha" -var="repository_id=$images_repository_id" ../backup/dev_state_backup.json
-        # Ensure state has converged
-        tofu -chdir="../infra" plan -detailed-exitcode -var-file="../environments/dev.tfvars" -var="image_to_deploy=$images_repository_uri/moon-backend:$tag_short_sha" -var="repository_id=$images_repository_id"
-        rm -f ./dev_state_backup.json
-        echo "Dev environment state restored."
+        restore_infra dev
         ;;
     3)
-        echo "Restoring prod environment state..."
-        gcloud storage cp "gs://${BACKUP_BUCKET_NAME}/prod_state_backup.json" ./prod_state_backup.json
-        read -rp "Enter the commit short SHA used to tag the image deployed : " tag_short_sha
-        images_repository_uri=$(tofu -chdir="../registry" output -raw registry_uri)
-        images_repository_id=$(tofu -chdir="../registry" output -raw repository_id)
-        tofu -chdir="../infra" init -reconfigure -var-file ../environments/prod.tfvars
-        # Check downloaded backup file to be able to target the registry terraform project
-        if [[ $(tofu -chdir="../infra" state pull -var-file ../environments/prod.tfvars | jq -r .lineage) != $(jq -r .lineage ./prod_state_backup.json) ]]
-        then
-            echo "Lineage of backup and current state do not match, aborting."
-            exit 1
-        fi
-        # Apply prod env state restoration
-        tofu -chdir="../infra" state push -var-file="../environments/prod.tfvars" -var="image_to_deploy=$images_repository_uri/moon-backend:$tag_short_sha" -var="repository_id=$images_repository_id" ../prod_state_backup.json
-        # Ensure state has converged
-        tofu -chdir="../infra" plan -detailed-exitcode -var-file="../environments/prod.tfvars" -var="image_to_deploy=$images_repository_uri/moon-backend:$tag_short_sha" -var="repository_id=$images_repository_id"
-        rm -f ./prod_state_backup.json
-        echo "Prod environment state restored."
+        restore_infra prod
         ;;
     *)
         echo "Invalid choice. Aborting."

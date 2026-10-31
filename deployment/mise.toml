@@ -1,5 +1,6 @@
 [tools]
 opentofu = "latest"
+jq = "latest"
 
 [settings]
 minimum_release_age = "5d"

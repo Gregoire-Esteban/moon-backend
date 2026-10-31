@@ -15,6 +15,7 @@ Rely on Google Cloud resources to deploy the moon app.
 #### Backups (optional)
 Execute *backup/prepare_backups.sh* script. It will help you create a **bucket** and schedule recurring backups using **cron**.
 
+The restoration script is *backup/restore.sh*.
 
 ### Cleanup ( ⚠️ Destroys everything related to the deployment ! )
 

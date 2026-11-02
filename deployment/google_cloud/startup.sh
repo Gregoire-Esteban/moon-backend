@@ -13,6 +13,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+disable_default_ce_service_account() {
+    local project_id="$1"
+    local project_number=$(gcloud projects describe $project_id --format="get(project_number)")
+    gcloud iam service-accounts disable $project_number-compute@developer.gserviceaccount.com
+}
+
 echo "Hello there !"
 
 # ========== 0. Build the image and check for known vulnerabilities ==========
@@ -52,6 +58,10 @@ selected_billing_account_id=$(echo "${rows[$((choice))]}" | awk '{print $1}')
 
 gcloud billing projects link $dev_project_id --billing-account="$selected_billing_account_id"
 gcloud billing projects link $prod_project_id --billing-account="$selected_billing_account_id"
+
+# Disable default compute engine service accounts (not used in the project)
+disable_default_ce_service_account $dev_project_id
+disable_default_ce_service_account $prod_project_id
 
 # ========== # 2. Generate the variable files for the environments ==========
 

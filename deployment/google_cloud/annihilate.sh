@@ -14,8 +14,7 @@ echo "  - Delete both GCP projects (dev & prod)"
 echo "  - Remove all Terraform state files and .terraform folders"
 echo "  - Delete the environments folder"
 echo "  - Remove the local moon-backend Docker image"
-echo "  - Remove the backup crontab entry"
-echo "  - Delete log files"
+echo "  - Remove the backup related elements"
 echo ""
 read -rp "Are you absolutely sure? Type 'ANNIHILATE' to confirm: " confirmation
 if [[ "$confirmation" != "ANNIHILATE" ]]; then
@@ -57,13 +56,20 @@ rm -rf environments
 echo "Deleting local moon-backend Docker image..."
 docker rmi -f $(docker images -q moon-backend) 2>/dev/null || true
 
-# ========== 6. Remove backup crontab entry ==========
+# ========== 6. Remove backup related elements ==========
 
-echo "Removing backup crontab entry..."
-(crontab -l 2>/dev/null || true) | grep -v "backup_script.sh >> /var/log/moon-backup.log" | crontab -
+if [[ -f "backup/.env" ]]; then 
+    source backup/.env
 
-# ========== 7. Delete log files ==========
-echo "Deleting log files..."
-rm -f /var/log/moon-backup.log
+    echo "Deleting associated bucket..."
+    gcloud storage rm -r gs://${BACKUP_BUCKET_NAME}
+
+    echo "Removing backup crontab entry..."
+    (crontab -l 2>/dev/null || true) | grep -v "backup_script.sh >> /var/log/moon-backup.log" | crontab -
+
+    echo "Deleting backup files..."
+    rm -f /var/log/moon-backup.log
+    rm -f backup/.env
+fi
 
 echo "Annihilation completed"

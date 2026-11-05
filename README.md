@@ -1,3 +1,6 @@
+<img width="1440" height="480" alt="MoonProjectBannerV1" src="https://github.com/user-attachments/assets/787ae981-9de0-4244-9511-e93c6c8734f8" />
+
+
 # Moon Backend
 
 A tiny REST API to get information about the lunar cycle status and moon-related data.
@@ -101,3 +104,9 @@ moon_backend/
 ## Contact
 
 For questions or issues, please open a GitHub issue.
+
+## Credits
+
+Banner image realised with [Blender](https://www.blender.org).
+
+Moon model from *NASA's Scientific Visualization Studio* ( Visualiser : Ernie Wright (USRA) | Scientist : Noah Petro (NASA/GSFC) )   

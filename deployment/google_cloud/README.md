@@ -2,7 +2,9 @@
 
 Rely on Google Cloud resources to deploy the moon app.
 
-*STATUS*: ⚠️ STILL IN DEVELOPMENT
+### Infrastructure Schema
+
+<img width="2669" height="985" alt="moon_backend_gcp" src="https://github.com/user-attachments/assets/f68286da-a356-4e4e-9325-ed3a8dc2852b" />
 
 ### Prerequisites
 

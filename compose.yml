@@ -1,14 +1,121 @@
 services:
-  moon-backend-local:
-    # Build the image from the Dockerfile in the current directory
+  traefik:
+    image: traefik:v3.7
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./local/certs:/certs:ro
+      - ./local/dynamic:/dynamic:ro
+    networks:
+      - traefik
+    
+    command:
+    
+    # EntryPoints
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.http.tls=true"
+
+      - "--providers.file.filename=/dynamic/tls.yaml"
+
+    # Providers
+      - "--providers.docker=true"
+      - "--providers.docker.network=traefik"
+
+    # API & Dashboard
+      - "--api.dashboard=true"
+      - "--api.insecure=false"
+
+      - "--log.level=INFO"
+      
+    labels:
+      # Enable Traefik
+      - traefik.enable=true
+      - traefik.docker.network=traefik
+      # Dashboard router
+      - "traefik.http.routers.dashboard.rule=Host(`dashboard.docker.localhost`)"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.tls=true"
+      # Anubis middleware
+      - traefik.http.middlewares.anubis.forwardauth.address=http://anubis:8080/.within.website/x/cmd/anubis/api/check
+      - traefik.http.middlewares.anubis.forwardauth.trustForwardHeader=false
+      # Redirect any HTTP to HTTPS
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.routers.web.rule=PathPrefix(`/`)
+      - traefik.http.routers.web.entrypoints=web
+      - traefik.http.routers.web.middlewares=redirect-to-https
+      - traefik.http.routers.web.tls=false
+
+  anubis:
+    image: ghcr.io/techarohq/anubis:latest
+    container_name: anubis
+    environment:
+      # Telling Anubis, where to listen for Traefik
+      - BIND=:8080
+      # In Traefik forwardAuth (subrequest) mode TARGET must be a single
+      # space — the space after '=' is significant, do not remove it
+      - "TARGET= "
+      # Domains Anubis is allowed to redirect to after the challenge
+      - REDIRECT_DOMAINS=example.lel,*.example.lel
+      # Full external URL of this Anubis instance, used to build the
+      # challenge redirect for Traefik forwardAuth
+      - PUBLIC_URL=https://anubis.example.lel
+      # The auth cookie is set while on the anubis.example.lel host, so it
+      # must be scoped to the registrable domain shared by every protected
+      # host: example.lel covers anubis/another/moonbe.example.lel.
+      # (A protected host on a different registrable domain such as
+      # moonbe.lel would never receive the cookie and would loop on the
+      # challenge — keep all protected hosts under one base domain.)
+      - COOKIE_DOMAIN=example.lel
+      # Traefik forwardAuth does not send X-Real-IP; tell Anubis to read
+      # the client IP from X-Forwarded-For (set by Traefik itself, so
+      # trustworthy here — trustForwardHeader=false strips client input)
+      - CUSTOM_REAL_IP_HEADER=X-Forwarded-For
+      # Docker clients have private IPs; don't strip them from XFF or
+      # Anubis fails the check with "X-Real-IP header is not set"
+      - XFF_STRIP_PRIVATE=false
+    networks:
+      - traefik
+    labels:
+      - traefik.enable=true # Enabling Traefik
+      - traefik.docker.network=traefik # Telling Traefik which network to use
+      - traefik.http.routers.anubis.rule=Host(`anubis.example.lel`) # Only Matching Requests for example.lel
+      - traefik.http.routers.anubis.entrypoints=websecure # Listen on HTTPS
+      - traefik.http.services.anubis.loadbalancer.server.port=8080 # Telling Traefik where to receive requests
+      - traefik.http.routers.anubis.service=anubis # Telling Traefik to use the above specified port
+
+  api:
     build: .
 
     ports:
-      - "8080:8000"
+      - "8000:8000"
 
     # Include development dependencies when working locally
     environment:
       - UV_NO_DEV=0
+    
+    networks:
+      - traefik
+    labels:
+      - traefik.enable=true # Enabling Traefik
+      - traefik.docker.network=traefik # Telling Traefik which network to use
+      - traefik.http.routers.api.rule=Host(`moonbe.example.lel`) # Must stay under example.lel (Anubis cookie domain)
+      - traefik.http.routers.api.entrypoints=websecure # Listening on the exclusive Anubis Network
+      - traefik.http.services.api.loadbalancer.server.port=8000 # Telling Traefik where to receive requests
+      - traefik.http.routers.api.service=api # Telling Traefik to use the above specified port
+      - traefik.http.routers.api.middlewares=anubis@docker # Use the Anubis middleware
+      - traefik.http.routers.api.tls=true
+
 
     develop:
       # Create a `watch` configuration to update the app
@@ -26,3 +133,7 @@ services:
         # Rebuild the image if dependencies change by checking uv.lock
         - action: rebuild
           path: ./uv.lock
+
+networks:
+  traefik:
+    name: traefik

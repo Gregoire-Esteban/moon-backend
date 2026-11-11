@@ -1,0 +1,7 @@
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+  certificates:
+    - certFile: /certs/ssl_certificate.crt
+      keyFile: /certs/ssl_private.key

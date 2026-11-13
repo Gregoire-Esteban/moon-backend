@@ -1,0 +1,5 @@
+bots:
+  - import: (data)/meta/default-config.yaml
+  - name: amazonbot
+    user_agent_regex: Amazonbot
+    action: DENY

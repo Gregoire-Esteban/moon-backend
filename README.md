@@ -54,6 +54,18 @@ docker build -t moon-backend -f Dockerfile .
 docker run -p 8000:8000 moon-backend
 ```
 
+#### Using Docker Compose
+
+Also useful to test and set up behaviours related to Anubis
+
+```bash
+# Start the stack
+docker compose up -d
+```
+
+The API is reachable at http://localhost:8923/moon/status, but cannot be used by bots like amazon bots.
+To verify, run `curl -i -A "Amazonbot" -L http://localhost:8923/moon/status`
+
 #### Local Development
 
 ```bash

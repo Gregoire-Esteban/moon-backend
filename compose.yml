@@ -6,11 +6,9 @@ services:
     security_opt:
       - no-new-privileges:true
     ports:
-      - 80:80
-      - 443:443
+      - "8923:80"
     volumes:
       - ./local/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./local/certs:/certs:ro
     networks:
       - proxy
 
@@ -18,40 +16,26 @@ services:
     image: ghcr.io/techarohq/anubis:latest
     container_name: anubis
     restart: unless-stopped
+    user: "1000:1000"
+    expose:
+      - "8923"
     environment:
-      # Telling Anubis, where to listen for nginx
-      - BIND=:8080
-      # In nginx auth_request (subrequest) mode TARGET must be a single
-      # space — the space after '=' is significant, do not remove it
-      - "TARGET= "
-      # Domains Anubis is allowed to redirect to after the challenge
-      - REDIRECT_DOMAINS=example.lel,*.example.lel
-      # Full external URL of this Anubis instance, used to build the
-      # challenge redirect for nginx auth_request
-      - PUBLIC_URL=https://anubis.example.lel
-      # The auth cookie is set while on the anubis.example.lel host, so it
-      # must be scoped to the registrable domain shared by every protected
-      # host: example.lel covers anubis/another/moonbe.example.lel.
-      # (A protected host on a different registrable domain such as
-      # moonbe.lel would never receive the cookie and would loop on the
-      # challenge — keep all protected hosts under one base domain.)
-      - COOKIE_DOMAIN=example.lel
-      # nginx auth_request does not send X-Real-IP; tell Anubis to read
-      # the client IP from X-Forwarded-For (set by nginx itself in
-      # /.within.website/, so trustworthy here)
-      - CUSTOM_REAL_IP_HEADER=X-Forwarded-For
-      # Docker clients have private IPs; don't strip them from XFF or
-      # Anubis fails the check with "X-Real-IP header is not set"
-      - XFF_STRIP_PRIVATE=false
+      BIND: ":8923"
+      DIFFICULTY: 5
+      POLICY_FNAME: "/data/cfg/botPolicy.yaml"
+      TARGET: "http://api:8000"
+    volumes:
+      - "./local/anubis/botPolicy.yaml:/data/cfg/botPolicy.yaml:ro"
     networks:
       - proxy
 
   api:
+    container_name: api
     build: .
 
     # Include development dependencies when working locally
     environment:
-      - UV_NO_DEV=0
+      UV_NO_DEV: 0
 
     networks:
       - proxy

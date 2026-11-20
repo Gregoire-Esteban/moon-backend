@@ -13,7 +13,7 @@ services:
       - proxy
 
   anubis:
-    image: ghcr.io/techarohq/anubis:latest
+    image: ghcr.io/techarohq/anubis:v1.28.2
     container_name: anubis
     restart: unless-stopped
     user: "1000:1000"

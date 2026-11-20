@@ -1,6 +1,16 @@
-variable "image_to_deploy" {
+variable "backend_image" {
   type        = string
-  description = "The full name of the image (registry/image:tag)"
+  description = "The full name of the backend image (registry/image:tag)"
+}
+
+variable "proxy_image" {
+  type        = string
+  description = "The full name of the proxy image (registry/image:tag)"
+}
+
+variable "challenger_image" {
+  type        = string
+  description = "The full name of the challenger image (registry/image:tag)"
 }
 
 variable "repository_id" {
@@ -39,7 +49,7 @@ resource "google_artifact_registry_repository_iam_binding" "moon_repo_iam_bindin
   depends_on = [module.service_account]
   repository = var.repository_id
   role       = "roles/artifactregistry.reader"
-  members = var.environment == "dev" ? ["serviceAccount:${module.service_account.email}"] : ["serviceAccount:service-${data.google_project.current_project.number}@serverless-robot-prod.iam.gserviceaccount.com", "serviceAccount:${module.service_account.email}"]
+  members    = var.environment == "dev" ? ["serviceAccount:${module.service_account.email}"] : ["serviceAccount:service-${data.google_project.current_project.number}@serverless-robot-prod.iam.gserviceaccount.com", "serviceAccount:${module.service_account.email}"]
 }
 
 resource "google_cloud_run_service" "moon_backend" {
@@ -49,11 +59,26 @@ resource "google_cloud_run_service" "moon_backend" {
 
   template {
     spec {
-     service_account_name = module.service_account.email
+      service_account_name = module.service_account.email
       containers {
-        image = var.image_to_deploy
-        ports {
-          container_port = 8000
+        name  = "backend"
+        image = var.backend_image
+        startup_probe {
+          initial_delay_seconds = 12
+          timeout_seconds       = 3
+          period_seconds        = 6
+          http_get {
+            path = "/ready"
+            port = 8000
+          }
+        }
+      }
+      containers {
+        name  = "challenger"
+        image = var.challenger_image
+        env {
+          name  = "REDIRECT_DOMAINS"
+          value = "*.run.app"
         }
         startup_probe {
           initial_delay_seconds = 12
@@ -61,6 +86,27 @@ resource "google_cloud_run_service" "moon_backend" {
           period_seconds        = 6
           http_get {
             path = "/ready"
+            port = 8923
+            http_headers {
+              name  = "X-Real-IP"
+              value = "127.0.0.1"
+            } // workaround while waiting for a real healthcheck to be requestable, see https://github.com/TecharoHQ/anubis/issues/630
+          }
+        }
+      }
+      // Exposed container
+      containers {
+        name  = "proxy"
+        image = var.proxy_image
+        ports {
+          container_port = 80
+        }
+        startup_probe {
+          initial_delay_seconds = 12
+          timeout_seconds       = 3
+          period_seconds        = 6
+          http_get {
+            path = "/static/index.html"
           }
         }
       }

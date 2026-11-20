@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 ## This script helps to set the deployment up entirely by :
-# 0. Build the image and check for known vulnerabilities
+# 0. Build the images and check for known vulnerabilities
 # 1. Create the Google Cloud projects
 # 2. Generate the variable files for the environments 
 # 3. Create the registry in the dev project
-# 4. Build and push a first image to it
+# 4. Tag and push the images to it
 # 5. Initiate the developement environment & provision it
 # 6. Initiate the production environment & provision it
 
@@ -21,12 +21,17 @@ disable_default_ce_service_account() {
 
 echo "Hello there !"
 
-# ========== 0. Build the image and check for known vulnerabilities ==========
+# ========== 0. Build the images and check for known vulnerabilities ==========
 
-echo "Let me check if the image is in good shape to be launched"
+echo "Let me check if the images are in good shape to be launched"
 cd ../../
+image_names="moon-backend proxy challenger"
 cat standalone.Dockerfile | docker build --network=host -t moon-backend -f- .
-grype moon-backend --from docker --fail-on critical
+docker build -t proxy deployment/common/proxy
+docker build -t challenger deployment/common/challenger
+for image in $image_names; do
+    grype "$image" --from docker --fail-on critical
+done
 echo "Image check passed"
 cd deployment/google_cloud
 
@@ -94,27 +99,45 @@ tofu apply -var-file ../environments/dev.tfvars
 images_repository_uri=$(tofu output -raw registry_uri)
 images_repository_id=$(tofu output -raw repository_id)
 
-# ========== # 4. Build and push a first image to it ==========
+# ========== # 4. Tag and push the images to it ==========
 
-echo "Build and push a first image to the repository..."
+echo "Tag and push the images to the repository..."
 gcloud auth configure-docker $REGION-docker.pkg.dev
 moon_backend_version=$(uv version --short)
 last_commit_sha=$(git rev-parse --short HEAD)
-docker tag "moon-backend" "$images_repository_uri/moon-backend:$moon_backend_version"
-docker tag "moon-backend" "$images_repository_uri/moon-backend:$last_commit_sha"
-docker push "$images_repository_uri/moon-backend" --all-tags
+for image in $image_names; do
+    docker tag "$image" "$images_repository_uri/$image:$moon_backend_version"
+    docker tag "$image" "$images_repository_uri/$image:$last_commit_sha"
+    docker push "$images_repository_uri/$image" --all-tags
+done
 
 # ========== 5. Initiate the developement environment & provision it ==========
 
 cd ../infra
 echo "Preparing the development environment..."
-tofu init -var-file ../environments/dev.tfvars -var="image_to_deploy=$images_repository_uri/moon-backend:$last_commit_sha" -var="repository_id=$images_repository_id"
-tofu apply -var-file ../environments/dev.tfvars -var="image_to_deploy=$images_repository_uri/moon-backend:$last_commit_sha" -var="repository_id=$images_repository_id"
+tofu init -var-file ../environments/dev.tfvars \
+    -var="backend_image=$images_repository_uri/moon-backend:$last_commit_sha" \
+    -var="proxy_image=$images_repository_uri/proxy:$last_commit_sha" \
+    -var="challenger_image=$images_repository_uri/challenger:$last_commit_sha" \
+    -var="repository_id=$images_repository_id"
+tofu apply -var-file ../environments/dev.tfvars \
+    -var="backend_image=$images_repository_uri/moon-backend:$last_commit_sha" \
+    -var="proxy_image=$images_repository_uri/proxy:$last_commit_sha" \
+    -var="challenger_image=$images_repository_uri/challenger:$last_commit_sha" \
+    -var="repository_id=$images_repository_id"
 echo "You can now test the service at $(tofu output -raw service_url) (the google cloud run proxy is recommended)"
 
 # ========== 6. Initiate the production environment & provision it ==========
 
 echo "Preparing the production environment..."
-tofu init -reconfigure -var-file ../environments/prod.tfvars -var="image_to_deploy=$images_repository_uri/moon-backend:$last_commit_sha" -var="repository_id=$images_repository_id"
-tofu apply -var-file ../environments/prod.tfvars -var="image_to_deploy=$images_repository_uri/moon-backend:$last_commit_sha" -var="repository_id=$images_repository_id"
+tofu init -reconfigure -var-file ../environments/prod.tfvars \
+    -var="backend_image=$images_repository_uri/moon-backend:$last_commit_sha" \
+    -var="proxy_image=$images_repository_uri/proxy:$last_commit_sha" \
+    -var="challenger_image=$images_repository_uri/challenger:$last_commit_sha" \
+    -var="repository_id=$images_repository_id"
+tofu apply -var-file ../environments/prod.tfvars \
+    -var="backend_image=$images_repository_uri/moon-backend:$last_commit_sha" \
+    -var="proxy_image=$images_repository_uri/proxy:$last_commit_sha" \
+    -var="challenger_image=$images_repository_uri/challenger:$last_commit_sha" \
+    -var="repository_id=$images_repository_id"
 echo "The service is now publicly available at $(tofu output -raw service_url)"

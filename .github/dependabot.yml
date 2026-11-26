@@ -8,6 +8,7 @@ updates:
   exclude-paths:
     - "src/*.py"
     - "test/**"
+    - "local/**"
     - "deployment/**"
     - "**/*.md"
     - ".*"
@@ -20,6 +21,37 @@ updates:
   exclude-paths:
     - "src/*.py"
     - "test/**"
+    - "local/**"
+    - "deployment/**"
+    - "**/*.md"
+    - ".*"
+
+- package-ecosystem: "terraform"
+  directory: "/deployment/google_cloud/infra"
+  schedule:
+    interval: "cron"
+    cronjob: "0 15 * * 3" # Every wednesday at 3 p.m.
+  exclude-paths:
+    - ".*"
+
+- package-ecosystem: "terraform"
+  directory: "/deployment/google_cloud/registry"
+  schedule:
+    interval: "cron"
+    cronjob: "30 15 * * 3" # Every wednesday at 3:30 p.m.
+  exclude-paths:
+    - ".*"
+
+- package-ecosystem: "docker-compose"
+  directory: "/"
+  schedule:
+    interval: "weekly"
+    day: saturday
+    time: "15:30"
+  exclude-paths:
+    - "src/**"
+    - "test/**"
+    - "local/**"
     - "deployment/**"
     - "**/*.md"
     - ".*"
